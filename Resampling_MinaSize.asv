@@ -1,0 +1,30 @@
+clc;
+clear;
+
+load('DataSet.mat')
+
+for k=1:6
+    % Obtain EMG data of all the tasks in the dataset
+    EMG = DataSet(k).EMG;
+    
+    % Obtain name of the tasks
+    tasks = fieldnames(EMG);
+    
+    % Loop for each task
+    for task = tasks
+        for t = 1:length(EMG.(task{1}))
+            for i = 1:8
+                DataSet.EMG.(task{1})(t).Resample(:, i) = MinaSize(EMG.(task{1})(t).Resample(:, i), 101);
+            end
+        end
+    end
+end
+
+for i = 1:8
+    % Right
+    CAMS_SUT.K5R.JRF.StairDescent.T01.dataset_ID_subset_DOF_each_step_resampled.Right(i,:) = MinaSize(CAMS_SUT.K5R.JRF.StairDescent.T01.dataset_ID_subset_DOF_each_step.Right.first(i,:)',100)';
+    % Left
+%     CAMS_SUT.K5R.JRF.StairDescent.T01.dataset_ID_subset_DOF_each_step_resampled.Left(i,:) = MinaSize(CAMS_SUT.K5R.JRF.StairDescent.T01.dataset_ID_subset_DOF_each_step.Left(i,:)',100)';
+end
+
+save('CAMS_SUT.mat','CAMS_SUT')
