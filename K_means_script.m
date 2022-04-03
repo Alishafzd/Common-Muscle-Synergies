@@ -42,27 +42,23 @@ for task = length(tasks):-1:1
         Profiles = [Profiles; mat_temp_P];
         Profiles_cell = vertcat(Profiles_cell, cell_temp_P);
     end
+    syns = cellfun(@(x) size(x, 2), Weights_cell);
+    syn = mode(syns);
     
-    [W_type,idx]=K_means_func(Weights',Weights_cell',0.576,0);
+    [W_type,idx]=K_means_func(Weights',Weights_cell',0.576,syn);
     
     for i=1:size(W_type,2)
         W_mean.(tasks{task})(:,i)=(mean(W_type{1, i},2));
         W_std.(tasks{task})(:,i)=std(W_type{1, i},0,2);
+        P_temp = [];
+        for j = size(Profiles_cell, 1):-1:1
+            P_temp = [P_temp; Profiles_cell{j}(idx{j} == i, :)];
+        end
+        P_mean.(tasks{task})(i, :) = mean(P_temp, 1);
     end
     
-    clusters = size(W_type, 2);
-    for c = clusters:-1:1
-        P_temp = [];
-        for i = size(Profiles_cell, 1):-1:1
-            P_temp = [P_temp; Profiles_cell{i}(idx{i} == c, :)];
-        end
-        P_mean.(tasks{task})(c, :) = mean(P_temp, 1);
-    end
-
 end
 
-size(Weights_cell)
-size(Weights)
 
 %% Apply K-means to Cluster Tasks
 
@@ -72,7 +68,7 @@ Weights_cell={};
 Profiles_cell={};
 
 % Gather the synergies of all the tasks
-for task = length(tasks):-1:1
+for task = 1:length(tasks)
     
     Weights_cell{task} = W_mean.(tasks{task});
     Weights = [Weights, W_mean.(tasks{task})];
@@ -82,697 +78,53 @@ for task = length(tasks):-1:1
 
 end
 
-size(Weights_cell)
-size(Weights)
-
+% Cluster all the tasks
 syn = 7;
-[W_type,idx]=K_means_func(Weights',Weights_cell,0.6,syn);
+[W_type,idx]=K_means_func(Weights',Weights_cell,0.576,syn);
 
+% Calculate mean values of each cluster
 for i=1:size(W_type,2)
     W_mean.(tasks{task})(:,i)=(mean(W_type{1, i},2));
     W_std.(tasks{task})(:,i)=std(W_type{1, i},0,2);
 end
 
 
-%% plots 
-% 
-% figure
-% for i=1:5
-%     subplot(1,5,i)
-%     bar(W_mean_lw(:,i))
-% end
-% 
-% figure
-% for i=1:2
-%     subplot(1,4,i)
-%     bar(W_mean_sq(:,i))
-% end
-% 
-% figure
-% for i=1:5
-%     subplot(1,5,i)
-%     bar(W_mean_DHW(:,i))
-% end
-% 
-% figure
-% for i=1:5
-%     subplot(1,5,i)
-%     bar(W_mean_SD(:,i))
-% end
-% %% for all
-% W_mean_all=[W_mean_lw';W_mean_sq';W_mean_DHW';W_mean_SD'];
-% W_mean_all_cell={W_mean_lw,W_mean_sq,W_mean_DHW,W_mean_SD};
-% 
-% W_std_all=[W_std_lw';W_std_sq';W_std_DHW';W_std_SD'];
-% W_std_all_cell={W_std_lw,W_std_sq,W_std_DHW,W_std_SD};
-% 
-% synergy=7;
-% 
-% [W_type_all,id_all]=K_means_func(W_mean_all,W_mean_all_cell,0.623,0);
-% %%
-% % figure
-% % i=1;
-% % for j=1:length(id_all{1,i})
-% %     if id_all{1,i}(j)==1
-% %         subplot(4,synergy+1,1)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==2
-% %         subplot(4,synergy+1,2)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==3
-% %         subplot(4,synergy+1,3)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==4
-% %         subplot(4,synergy+1,4)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==5
-% %         subplot(4,synergy+1,5)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==6
-% %         subplot(4,synergy+1,6)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %         
-% %     if id_all{1,i}(j)==7
-% %         subplot(4,synergy+1,7)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %         
-% % %     if id_all{1,i}(j)==8
-% % %         subplot(4,synergy+1,8)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %             
-% % %     if id_all{1,i}(j)==9
-% % %         subplot(4,synergy+1,9)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %                 
-% % %     if id_all{1,i}(j)==10
-% % %         subplot(4,synergy+1,10)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %                 
-% %     if id_all{1,i}(j)==0
-% %         subplot(4,synergy+1,8)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% % end
-% % 
-% % 
-% % i=2;
-% % for j=1:length(id_all{1,i})
-% %     if id_all{1,i}(j)==1
-% %         subplot(4,synergy+1,9)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==2
-% %         subplot(4,synergy+1,10)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==3
-% %         subplot(4,synergy+1,11)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==4
-% %         subplot(4,synergy+1,12)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==5
-% %         subplot(4,synergy+1,13)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==6
-% %         subplot(4,synergy+1,14)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %         
-% %     if id_all{1,i}(j)==7
-% %         subplot(4,synergy+1,15)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %         
-% % %     if id_all{1,i}(j)==8
-% % %         subplot(4,synergy+1,17)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %             
-% % %     if id_all{1,i}(j)==9
-% % %         subplot(4,synergy+1,19)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %                 
-% % %     if id_all{1,i}(j)==10
-% % %         subplot(4,synergy+1,21)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %                 
-% %     if id_all{1,i}(j)==0
-% %         subplot(4,synergy+1,16)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% % end
-% % 
-% % 
-% % i=3;
-% % for j=1:length(id_all{1,i})
-% %     if id_all{1,i}(j)==1
-% %         subplot(4,synergy+1,17)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==2
-% %         subplot(4,synergy+1,18)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==3
-% %         subplot(4,synergy+1,19)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==4
-% %         subplot(4,synergy+1,20)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==5
-% %         subplot(4,synergy+1,21)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==6
-% %         subplot(4,synergy+1,22)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %         
-% %     if id_all{1,i}(j)==7
-% %         subplot(4,synergy+1,23)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %         
-% % %     if id_all{1,i}(j)==8
-% % %         subplot(4,synergy+1,26)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %             
-% % %     if id_all{1,i}(j)==9
-% % %         subplot(4,synergy+1,29)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %                 
-% % %     if id_all{1,i}(j)==10
-% % %         subplot(4,synergy+1,32)
-% % %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% % %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% % %         
-% % %         hold on
-% % %         
-% % %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% % %         er.Color = [0 0 0];
-% % %         er.LineStyle = 'none';
-% % %     end
-% % %                 
-% %     if id_all{1,i}(j)==0
-% %         subplot(4,synergy+1,24)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% % end
-% % 
-% % i=4;
-% % for j=1:length(id_all{1,i})
-% %     if id_all{1,i}(j)==1
-% %         subplot(4,synergy+1,25)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==2
-% %         subplot(4,synergy+1,26)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==3
-% %         subplot(4,synergy+1,27)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==4
-% %         subplot(4,synergy+1,28)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==5
-% %         subplot(4,synergy+1,29)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %     
-% %     if id_all{1,i}(j)==6
-% %         subplot(4,synergy+1,30)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %         
-% %     if id_all{1,i}(j)==7
-% %         subplot(4,synergy+1,31)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-%         
-% %     if id_all{1,i}(j)==8
-% %         subplot(4,synergy+1,36)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %             
-% %     if id_all{1,i}(j)==9
-% %         subplot(4,synergy+1,39)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %                 
-% %     if id_all{1,i}(j)==10
-% %         subplot(4,synergy+1,43)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% %                 
-% %     if id_all{1,i}(j)==0
-% %         subplot(4,synergy+1,32)
-% %         errorbar(W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j))
-% %         bar(1:16,W_mean_all_cell{1,i}(:,j))
-% %         
-% %         hold on
-% %         
-% %         er = errorbar(1:16,W_mean_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j),W_std_all_cell{1,i}(:,j));
-% %         er.Color = [0 0 0];
-% %         er.LineStyle = 'none';
-% %     end
-% % end
-% 
-% % figure
-% 
-% % subplot(4,1,1)
-% % errorbar(W_mean_all_cell{1,1}(:,1),W_std_all_cell{1,1}(:,1))
-% % bar(1:16,W_mean_all_cell{1,1}(:,1))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,1}(:,1),W_std_all_cell{1,1}(:,1),W_std_all_cell{1,1}(:,1));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% % 
-% % subplot(4,1,2)
-% % errorbar(W_mean_all_cell{1,1}(:,2),W_std_all_cell{1,1}(:,2))
-% % bar(1:16,W_mean_all_cell{1,1}(:,2))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,1}(:,2),W_std_all_cell{1,1}(:,2),W_std_all_cell{1,1}(:,2));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% % 
-% % subplot(4,1,3)
-% % errorbar(W_mean_all_cell{1,3}(:,2),W_std_all_cell{1,3}(:,2))
-% % bar(1:16,W_mean_all_cell{1,3}(:,2))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,3}(:,2),W_std_all_cell{1,3}(:,2),W_std_all_cell{1,3}(:,2));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% % 
-% % subplot(4,1,4)
-% % errorbar(W_mean_all_cell{1,2}(:,2),W_std_all_cell{1,2}(:,2))
-% % bar(1:16,W_mean_all_cell{1,2}(:,2))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,2}(:,2),W_std_all_cell{1,2}(:,2),W_std_all_cell{1,2}(:,2));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% % 
-% % subplot(4,1,5)
-% % errorbar(W_mean_all_cell{1,2}(:,5),W_std_all_cell{1,2}(:,5))
-% % bar(1:16,W_mean_all_cell{1,2}(:,5))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,2}(:,5),W_std_all_cell{1,2}(:,5),W_std_all_cell{1,2}(:,5));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% % 
-% % subplot(4,1,6)
-% % errorbar(W_mean_all_cell{1,2}(:,8),W_std_all_cell{1,2}(:,8))
-% % bar(1:16,W_mean_all_cell{1,2}(:,8))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,2}(:,8),W_std_all_cell{1,2}(:,8),W_std_all_cell{1,2}(:,8));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% % 
-% % subplot(4,1,7)
-% % errorbar(W_mean_all_cell{1,3}(:,1),W_std_all_cell{1,3}(:,1))
-% % bar(1:16,W_mean_all_cell{1,3}(:,1))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,3}(:,1),W_std_all_cell{1,3}(:,1),W_std_all_cell{1,3}(:,1));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% % 
-% % subplot(4,1,10)
-% % errorbar(W_mean_all_cell{1,4}(:,2),W_std_all_cell{1,4}(:,2))
-% % bar(1:16,W_mean_all_cell{1,4}(:,2))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,4}(:,2),W_std_all_cell{1,4}(:,2),W_std_all_cell{1,4}(:,2));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% 
-% % subplot(4,1,13)
-% % errorbar(W_mean_all_cell{1,4}(:,4),W_std_all_cell{1,4}(:,4))
-% % bar(1:16,W_mean_all_cell{1,4}(:,4))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,4}(:,4),W_std_all_cell{1,4}(:,4),W_std_all_cell{1,4}(:,4));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% % 
-% % subplot(4,1,14)
-% % errorbar(W_mean_all_cell{1,4}(:,6),W_std_all_cell{1,4}(:,6))
-% % bar(1:16,W_mean_all_cell{1,4}(:,6))
-% % 
-% % hold on
-% % 
-% % er = errorbar(1:16,W_mean_all_cell{1,4}(:,6),W_std_all_cell{1,4}(:,6),W_std_all_cell{1,4}(:,6));
-% % er.Color = [0 0 0];
-% % er.LineStyle = 'none';
-% 
+%% Plots 
+
+% Define colors of each task and muscles order
+colors = ['r', 'k', 'b', 'g', 'g', 'm', 'm'];
+muscles = {'RF'; 'VM'; 'VL'; 'TA'; 'HM'; 'HL'; 'GM'; 'GL';};
+
+figure();
+for task = 1:length(Weights_cell)
+    % Insert name of the tasks and sub-clusters
+    x = 0.01;
+    y = (1 - 2.2773/15)*(7 - task)/7 + 1/13.17;
+    dim = [x y 0.1 0.1];
+    annotation('textbox',dim,'String',strrep(tasks{task}, '_', ''),...
+        'FitBoxToText', 'on', 'HorizontalAlignment', 'center');
+    
+    for id = 1:length(idx{task})        
+        % Plot synergies of each task
+        k = (task - 1) * syn + idx{task}(id);
+        subplot(length(Weights_cell), syn, k);
+        
+        % Plot error bars first
+        er = errorbar(1:8, Weights_cell{task}(:, id),...
+            W_std.(tasks{task})(:, id));   
+        er.Color = [0 0 0];  
+        er.LineStyle = 'none';  
+        
+        hold on
+        bar_k = bar(Weights_cell{task}(:, id));
+        
+        ylim([0 1]);
+        
+        % Add Colors and TickLabels for each bar graph
+        set(bar_k, 'FaceColor', colors(task))
+        set(gca, 'XTickLabel', muscles, 'fontsize',7)
+        xtickangle(90)
+        
+        hold off
+    end
+end
